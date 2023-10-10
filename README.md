@@ -16,5 +16,5 @@ V00964979
 &ensp;Next I would like to research how autonomous driving utilizes the data from cameras, and other information from the vehicle to work properly. This will include how these systems go about compressing data, as well as combining data from different sensors. I would like to accomplish most of this by November 6th when the project update is due.
 &ensp;Lastly I would like to research the ideas for augmented reality while driving, and how these systems utilize information differently from the autonomous driving system. Furthermore, I would like to determine the ideas for this technology and where it could be heading in the future considering this technology requires you to be driving the vehicle, but we are already seeing autonomous vehicles becoming a reality. This will be my last idea of research and thus will be finished by December 4th.
 
-**Website Link:** https://studentweb.uvic.ca/~dustinjowsey
+**Website Link:** https://github.com/dustinjowsey/CSC-461_Project/blob/main/README.md
  
