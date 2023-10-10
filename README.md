@@ -1,7 +1,7 @@
 # CSC-461 Project Proposal
 Dustin Jowsey
 V00964979
-						                    **Multimedia Systems In Automobiles**
+				**Multimedia Systems In Automobiles**
   A form of multimedia systems that are becoming more and more advanced are ones found in vehicles. Many newer versions of these systems allow you to watch movies, play music, see from cameras on the car, and control functions of the vehicle all from these systems. For my project idea I would like to look into how these systems communicate with each other and the vehicle. I would like to research the protocols used in these systems and how certain protocols work better for specific tasks. I would also like to investigate the systems used for automatic parking, or self driving features of newer vehicles. There have also been some interesting developments with augmented reality in vehicles which I would also like to research. 
 
 **Problem:**
