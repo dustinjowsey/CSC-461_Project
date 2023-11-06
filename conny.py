@@ -4,12 +4,6 @@ from struct import unpack
 import struct
 import math
 
-class Node():
-    def __init__(self, val):
-        self.left = None
-        self.right = None
-        self.val = val
-
 class JPEG():
 
     class __bitStream():
@@ -369,7 +363,11 @@ class JPEG():
                             exit(0)
 
         def __str__(self) -> str:
-            pass
+            string = f"START OF FRAME\nPrecision: {self.precision}\nLength: {self.length}\nImage Size: {self.width}x{self.height}\nNumber of Coponenets (Number of Color Channels): {self.numComponents}\nComponents (Color Channels):\n"
+            for comp in self.components:
+                string = string + f"  id: {comp[0]}\n  horizontal sampling factor:vertical sampling factor: {comp[1]}:{comp[2]}\n  quantization table number (reference): {comp[3]}\n"
+            string = string + "END"
+            return string
 
     class __startOfScan():
         def __init__(self, length, data):
@@ -462,7 +460,6 @@ class JPEG():
                     #length does not include the marker
                     huffTable = self.__huffmanTable(huffLength, self.data[index + 2: index + huffLength + 2])
                     self.huffmanTables.append(huffTable)
-                    print(huffTable)
 
                 case 0xDA: #start of scan 0xFF 0xDA
                     length = unpack(">H", self.data[index+2:index+4])[0]
@@ -502,7 +499,7 @@ class JPEG():
         pass
 
 
-    def __init__(self, file):
+    def __init__(self, file, display = False):
         with open(file, 'rb') as f:
             self.data = f.read()
         #jpg files start with 0xFF 0xD8
@@ -516,17 +513,26 @@ def display_options():
     print("conny [File] [option]\nOptions:\n-h list of all commands in conny.")
 
 def main(argv):
+    #Process options
+    options = argv[2:]
+
     #check provided arguments
     match(argv):
         case [_,"-h"]:
             display_options()
-        case [_, filename, option]:
+        case [_, filename, *_]:
             regex = re.compile("[.][a-z]*")
             extension = regex.search(filename)
             if extension == None:
                 print("File does not exist. (Include file extension)")
                 exit(0)
             extension = extension.group()[1:]
+            
+            match(extension, options):
+                case("jpeg" | "jpg" | "jfif", ["-d"]):
+                    JPEG(filename)
+                case("jpeg" | "jpg" | "jfif", ["-d", "-i"]):
+                    JPEG(filename, True)
 
             match(extension):
                 case "jpg"|"jpeg"|"jfif":
@@ -536,7 +542,7 @@ def main(argv):
             print("do nothing")
             
 
-    if(len(argv) != 3):
+    if(len(argv) < 3):
         print("Incorrect command please type conny -h for help")
 
 
