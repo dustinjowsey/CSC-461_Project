@@ -1,6 +1,6 @@
 # CSC-461 Project
 
-<h2>**Project Proposal**<h2>
+<h2>**Project Proposal**</h2>
 Dustin Jowsey     
 V00964979    
 
@@ -33,14 +33,14 @@ schedule I would like to look into .zip file types and maybe create a UI as well
 **Website**    
 https://github.com/dustinjowsey/CSC-461_Project
 
-<h2>**Conny Documentation:**<h2>    
+<h2>**Conny Documentation:**</h2>    
 To run please type     
-python conny.py \[filename\] \[options\]    
+python conny.py [filename] [options]    
 Note:    
     Right now please use python conny.py profile.jpg -d -i    
 This will display the steps of the decoding process up to the point I have made it to i.e not as far as I would like to have made it.
 
-<h2>**Project update**<h2>    
+<h2>**Project update**</h2>    
 Dustin Jowsey     
 V00964979    
 CSC-461    
