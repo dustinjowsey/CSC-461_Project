@@ -94,9 +94,14 @@ class JPEG():
                 print("Error! Invalid data length for Default Header. Cannot process data accuratly.")
                 exit(0)
 
-            self.version = unpack(">H", data[7:9])[0]
+            version = unpack(">H", data[7:9])[0]
+            self.version = [version>>8,version & 0xFF]
             self.density = (unpack(">H", data[10:12])[0],unpack(">H", data[12:14])[0])
             self.thumbnail = unpack(">H", data[14:16])[0]
+            
+        def __str__(self):
+            string = f"DEFAULT HEADER\nLength: {self.length}\nVersion: {self.version[0]}.{self.version[1]}\nDensity: {self.density}\nThumbnail: {self.thumbnail}\nEND\n"
+            return string
 
     class __huffmanTable():
         class huffNode():
@@ -284,17 +289,18 @@ class JPEG():
 
         def __str__(self) -> str:
             count = 0
-            string = f"Id: {self.id}"
+            string = f"QUANTIZATION TABLE\nId: {self.id}"
             if self.id == 0:
                 string = string + " (Luminance)"
             elif self.id == 1:
                 string = string + " (Chrominance)"
-            string = string + "\nTable size: {self.tablesize}x{self.tablesize}\nTable Data:\n"
+            string = string + f"\nTable size: {self.tablesize}x{self.tablesize}\nTable Data:\n"
             for i in self.table:
                 string = string + " " + str(i)
                 count = count + 1
                 if count % 8 == 0:
                     string = string + "\n"
+            string = string + "END\n"
             return string
 
     class __startOfFrame():
@@ -387,7 +393,13 @@ class JPEG():
             self.aprox = unpack("B", data[length-2:length-1])[0]
             #Everything after this header is the huffman bitstream
             self.huffData = data[length:]
-
+        
+        def __str__(self):
+            string = f"START OF SCAN\nLength: {self.length}\nNumber of Components (Color Channels): {self.numComponents}\nBlock Data:\n"
+            for block in self.blocks:
+                string = string + "  component id: {block[0]}\n  DC huffman table id: {block[1]}\n  AC huffman table id: {block[2]}\n"
+            string = string + "Start of Selection: {self.startSelection}\nEnd of Selection: {self.endSelection}\nApproximation: {self.approx}\nEND\n"
+            return string
     
     class __RestartInterval():
         def __init__(self, length, data):
@@ -507,6 +519,15 @@ class JPEG():
             print("File is not a correct jpg, jpeg or jfif file. Cannot decode")
             exit(0)
         self.__searchForHeaders()
+        if display:
+            print(self.defHeader)
+            for table in self.quantizationTables:
+                print(table)
+            print(self.startFrame)
+            for table in self.huffmanTables:
+                print(table)
+            print(self.startScan)
+            print("\n*** Starting Decoding *** Not complete yet\n")
         self.decodeImage()
 
 def display_options():
