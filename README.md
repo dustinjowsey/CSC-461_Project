@@ -34,22 +34,22 @@ schedule I would like to look into .zip file types and maybe create a UI as well
 https://github.com/dustinjowsey/CSC-461_Project
 
 <h2>**Conny Documentation:**</h2>    
-To run please type     
-python conny.py [filename] [options]    
-Note:    
-    Right now please use python conny.py profile.jpg -d -i    
-This will display the steps of the decoding process up to the point I have made it to i.e not as far as I would like to have made it.
-
+To run please type <br />
+python conny.py [filename] [options] <br />
+Note: <br />
+&nbsp;&nbsp;Right now please use python conny.py profile.jpg -d -i <br />
+This will display the steps of the decoding process up to the point I have made it to i.e not as far as I would like to have made it. <br />
+<br />
 <h2>**Project update**</h2>    
 Dustin Jowsey     
 V00964979    
 CSC-461    
 									Project Update    
     
-• For the schedule I have created, I am quite far behind. I do not think it is possible to complete all that I had planned originally in the time period of the project.
-• The main issue I have been having is underestimating the complexity of the JPEG image format. I would like my program to account for as many different types of JPEGS as well, so there has been a lot of learning to do. Furthermore, information on JPEG is out there, but it is often not easily understood (at least for me) or it is somewhat misleading in how the process to encoding a JPEG image works. This has definitely been the biggest struggle for me. I have read that the PNG encoding is a lot simpler so I am hoping it won’t take as long as JPEG.
-• I think I will need to adjust my proposal as I wanted to be working on audio file conversions by now, but am still working on the JPEG decoder. I think I will be able to complete the JPEG and PNG converter soon as once I finish the decoder I will have a really good idea of the process that goes into JPEG images. I would like to push myself to at least complete an audio file conversion by the end of the course. I would like to attempt MP3 to WAV and vice versa. 
-• I would like to update the output of data to provide a better way of displaying data the decoding process if they choose to see the output.
+• For the schedule I have created, I am quite far behind. I do not think it is possible to complete all that I had planned originally in the time period of the project.       
+• The main issue I have been having is underestimating the complexity of the JPEG image format. I would like my program to account for as many different types of JPEGS as well, so there has been a lot of learning to do. Furthermore, information on JPEG is out there, but it is often not easily understood (at least for me) or it is somewhat misleading in how the process to encoding a JPEG image works. This has definitely been the biggest struggle for me. I have read that the PNG encoding is a lot simpler so I am hoping it won’t take as long as JPEG.       
+• I think I will need to adjust my proposal as I wanted to be working on audio file conversions by now, but am still working on the JPEG decoder. I think I will be able to complete the JPEG and PNG converter soon as once I finish the decoder I will have a really good idea of the process that goes into JPEG images. I would like to push myself to at least complete an audio file conversion by the end of the course. I would like to attempt MP3 to WAV and vice versa.        
+• I would like to update the output of data to provide a better way of displaying data the decoding process if they choose to see the output.       
 
 
 
