@@ -50,7 +50,9 @@ CSC-461
 • The main issue I have been having is underestimating the complexity of the JPEG image format. I would like my program to account for as many different types of JPEGS as well, so there has been a lot of learning to do. Furthermore, information on JPEG is out there, but it is often not easily understood (at least for me) or it is somewhat misleading in how the process to encoding a JPEG image works. This has definitely been the biggest struggle for me. I have read that the PNG encoding is a lot simpler so I am hoping it won’t take as long as JPEG.       
 • I think I will need to adjust my proposal as I wanted to be working on audio file conversions by now, but am still working on the JPEG decoder. I think I will be able to complete the JPEG and PNG converter soon as once I finish the decoder I will have a really good idea of the process that goes into JPEG images. I would like to push myself to at least complete an audio file conversion by the end of the course. I would like to attempt MP3 to WAV and vice versa.        
 • I would like to update the output of data to provide a better way of displaying data the decoding process if they choose to see the output.       
-
+<h2>**References**</h2>
+https://yasoob.me/posts/understanding-and-writing-jpeg-decoder-in-python/ <br />
+This reference has helped me to understand the JPEG Header a lot as well as give me a way to compare my output to what is expected from a working JPEG decoder.
 
 
 
