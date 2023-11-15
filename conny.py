@@ -1,7 +1,6 @@
 import sys
 import re
 from struct import unpack
-import struct
 import math
 
 class JPEG():
@@ -408,6 +407,15 @@ class JPEG():
                 print("Error! Invalid data length for 'Restart Interval'. Cannot process data accuratly.")
                 exit(0)
             self.restartInterval = unpack(">H", data[2:4])
+
+    class __MCU():
+        def __init__(self, mapSize = 64) -> None:
+            self.y = [0 for i in range(mapSize)]
+            self.cb = [0 for i in range(mapSize)]
+            self.cr = [0 for i in range(mapSize)]
+            self.r = self.y
+            self.g = self.cb
+            self.b = self.cr
 
     imageData = []
     defHeader = None
