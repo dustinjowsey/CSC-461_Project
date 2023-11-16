@@ -55,6 +55,9 @@ class JPEGDecoder():
                 bits = (bits << 1) | cur
             return bits
 
+        def getPos(self):
+            return self.pos
+
         #restarts the stream at 0
         def restartStream(self):
             self.pos = 0
@@ -73,8 +76,22 @@ class JPEGDecoder():
             else:
                 True
 
-        def getLen():
+        def getLen(self):
             return self.len
+        
+        def getByte(self, index):
+            if(index > self.len | index < self.len):
+                print("Error! invalid index when retrieving bytes. Index out of range")
+                return None
+            return self.data[index]
+
+        def getBytes(self, start = -1, numBytes = 1):
+            if(start == -1):
+                start = math.floor(self.pos / 8)
+            bytes = []
+            for i in range(start, numBytes+start,1):
+                bytes.append(hex(self.getByte(i)))
+            return bytes
 
         #will show all bits in the stream
         def show(self, start = 0, end = -1):
@@ -556,8 +573,8 @@ class JPEGDecoder():
                 data.append(self.imageData[i])
         return data
 
-    def __getDCCoefLen(self, tableId, stream):
-        DCCoeflength = DCTables[tableId].searchHuffTree(stream)
+    def __getDCCoefLen(self, table, stream):
+        DCCoeflength = table.searchHuffTree(stream)
         if(DCCoeflength == None):
             print("Error! bitstream could not be converted to a symbol")
             exit(0)
@@ -575,9 +592,21 @@ class JPEGDecoder():
         if(length != 0 & DCCoef < math.pow(2,length-1)):
             DCCoef = DCCoef - (math.pow(2,length) - 1)
         return DCCoef
-
-    def __getACCoef(self):
-
+    
+    def __getACCoef(self,stream,length):
+        #Length of ACCoef cannot be greater than 10
+        if(length > 10):
+            print("Error! AC coefficient length greater than 10")
+            exit(0)
+        if(length != 0):
+            ACCoef = stream.getBits(length)
+            if(ACCoef == -1):
+                print("Error! Invalid DC Coefficient value")
+                exit(0)
+            #check if ACCoef is negative
+            if(length != 0 & ACCoef < math.pow(2,length-1)):
+                ACCoef = ACCoef - (math.pow(2,length) - 1)
+        return ACCoef
 
     #Begin decoding the data using the huffman tables
     def __createMCUsFromHuffman(self,data):
@@ -602,8 +631,6 @@ class JPEGDecoder():
             else:
                 print("Error! Invalid classification found in __decodingFromHuffman")
                 exit(0)
-        
-        print(DCTables[0])
 
         mapIndex = 0
         if(self.blockDim == 16):
@@ -615,7 +642,10 @@ class JPEGDecoder():
             for j in range(MCUCols):
                 for k in range(self.startScan.numComponents):
                     #start by getting DC coefficient length
-                    DCCoeflength = self.__getDCCoefLength(self.startScan.blocks[k][1],stream)
+                    print("DC")
+                    print(stream.getBytes(-1,2))
+                    print(stream.getBit(stream.getPos()))
+                    DCCoeflength = self.__getDCCoefLen(DCTables[self.startScan.blocks[k][1]],stream)
                     #using the length get the actual DC coefficient
                     DCCoef = self.__getDCCoef(stream,DCCoeflength)
 
@@ -623,32 +653,35 @@ class JPEGDecoder():
                     MCUs[i][j][k][0][0] = DCCoef + prevDCCoef[k]
                     prevDCCoef[k] = DCCoef
 
-
                     #***
                     #*** MADE IT HERE SIMPLIFY CODE AND FIGURE OUT WHAT IS WRONG ***
                     #***
 
-
                     #get AC values *** Note for simplicity we will only account for JPEGs with self.blockDim x self.blockDim tables
                     for l in range(1,self.blockDim*self.blockDim,1):
                         symbol = ACTables[self.startScan.blocks[k][1]].searchHuffTree(stream)
+                        print("AC")
+                        print(stream.getBytes(-1,2))
+                        print(stream.getBit(stream.getPos()))
                         if(symbol == -1):
-                            print("Error! Invalid AC value")
+                            print("Error! Invalid symbol")
                             exit(0)
-                        
+            
                         #if the symbol is 0 we just fill the rest of the MCU component with 0s
                         if(symbol == 0):
                             while(l < MCURows):
+                                #Need to convert 1d array zigzag map into 2d array indexes
                                 x = math.floor(self.zigzagMap[mapIndex][l] / self.blockDim) 
                                 y = self.zigzagMap[mapIndex][l] % self.blockDim
-                                MCUs[l][j][k][x][y] = 0
+                                MCUs[i][j][k][x][y] = 0
                                 l += 1
                             break
-                        
+
+                        #If we are not adding all zeros determine how many zeros we are adding plus the AC Coefficent length
                         numZeros = symbol >> 4
                         ACCoeflength = symbol & 0x0F
 
-                        #0xF0
+                        #0xF0 symbol means we need to add 16 zeros not 15
                         if(symbol == 0xF0):
                             numZeros = 16
                         
@@ -658,30 +691,18 @@ class JPEGDecoder():
                         
                         for m in range(numZeros):
                             #Need to convert 1d array zigzag map into 2d array indexes
-                            x = math.floor(self.zigzagMap[mapIndex][m] / self.blockDim) 
-                            y = self.zigzagMap[mapIndex][m] % self.blockDim
-                            MCUs[l][m][k][x][y] = 0
-                            l += 1
-                        
-                        #AC coeff cannot be greater than 10
-                        if(ACCoeflength > 10):
-                            print("Error! AC length greater than 10")
-                            exit(0)
-
-                        if(ACCoeflength != 0):
-                            ACCoef = stream.getBits(ACCoeflength)
-                            if(ACCoef == -1):
-                                print("Error! Invalid DC Coefficient value")
-                                exit(0)
-                             #check if ACCoef is negative
-                            if(ACCoeflength != 0 & ACCoef < math.pow(2,ACCoeflength-1)):
-                                ACCoef = ACCoef - (math.pow(2,ACCoeflength) - 1)
-                            
-                            #Need to convert 1d array zigzag map into 2d array indexes
                             x = math.floor(self.zigzagMap[mapIndex][l] / self.blockDim) 
                             y = self.zigzagMap[mapIndex][l] % self.blockDim
-                            MCUs[l][j][k][x][y] = ACCoef
+                            MCUs[i][j][k][x][y] = 0
                             l += 1
+                        
+                        #after adding number of zeros want to add the AC coefficient
+                        ACCoef = self.__getACCoef(stream,ACCoeflength)
+                        #Need to convert 1d array zigzag map into 2d array indexes
+                        x = math.floor(self.zigzagMap[mapIndex][l] / self.blockDim) 
+                        y = self.zigzagMap[mapIndex][l] % self.blockDim
+                        MCUs[i][j][k][x][y] = ACCoef
+                        l += 1
         return MCUs
 
 
