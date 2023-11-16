@@ -1,68 +1,61 @@
-import struct
+from struct import pack
+import re
+import math
+import BMPConstants
 
-class BMP:
-    #Identifiers
-    BM = 0x424D
-    BA = 0x4241
-    CI = 0x4349
-    CP = 0x4350
-    IC = 0x4943
-    PT = 0x5054
+class BMPEncoder:
 
-    #DIB Header Types (determines size of header)
-    BITMAPCOREHEADER = 12
-    OS21XBITMAPHEADER = 12
-    #Can be either 64 or 16, if 16 the size is still 64 but all values beyond the first 16 bytes are 0
-    OS22XBITMAPHEADER = (64,16)
-    BITMAPINFOHEADER = 40
-    BITMAPV2INFOHEADER = 52
-    BITMAPV3INFOHEADER = 56
-    BITMAPV4HEADER = 108
-    BITMAPV5HEADER = 124
+    def __encodeHeader(self,width,height,numColorChannels):
+        #Begin writing the header.
+        #ID 2 bytes long
+        self.bmpFile.write(pack('B',0x42))
+        self.offset += 1
+        self.bmpFile.write(pack('B',0x4D))
+        self.offset += 1
 
-    #Halftoning Compression Options
-    NONE = 0
-    ERRORDIFFUSION = 1
-    PANDA = 2
-    SUPER_CIRCLE = 3
+        #Size of BMP file 4 bytes long (including header length which is always 14 bytes long)
+        paddingLen = width % 4
+        #Size is 14 bytes for BMP Header + 16 for DIB header + height x width x number of color channels + Number of padding bytes x height
+        #*** Assuming DIB Header is of length 16 for simplicity *** need to fix in future
+        size = 14 + 16 + (width * height * numColorChannels) + (paddingLen * height)
+        self.bmpFile.write(pack('<L',size))
+        self.offset += 4
 
-    #Compression Methods
-    BI_RGB = 0
-    BI_RLE8 = 1
-    BI_RLE4 = 2
-    BI_BITFIELDS = 3
-    BI_JPEG = 4
-    BI_PNG = 5
-    BI_ALPHABITFIELDS = 6
-    BI_CMYK = 11
-    BI_CMYKRLE8 = 12
-    BI_CMYKRLE4 = 13
+        #Unused 2 bytes long
+        self.bmpFile.write(pack('<H',0))
+        self.offset += 2
 
-    def __decodeBMP(self):
-        pass
+        #Unused 2 bytes long
+        self.bmpFile.write(pack('<H',0))
+        self.offset += 2
 
-    def __encodeDIBHeader(self):
+        #Offset where the bitmap data begins 4 bytes long (end of header?)
+        #*** We assumed DIB header to length 16 *** so 14 + 16 = 30
+        self.bmpFile.write(pack('<L',30))
+        self.offset += 4
+
         #DIB header
         #Number of bytes in the DIB header 4 bytes long
-        self.bmpFile.pack(self.offset,0x00000000)
+        #*** Assumed to be 16 for simplicity ***
+        self.bmpFile.write(pack('<L',16))
         self.offset += 4
 
         #Width of bitmap in pixels 4 bytes long
-        self.bmpFile.write(self.offset,0x00000000)
+        self.bmpFile.write(pack('<L',width))
         self.offset += 4
 
         #Height of bitmap in pixels 4 bytes long
-        self.bmpFile.write(self.offset,0x00000000)
+        self.bmpFile.write(pack('<L',height))
         self.offset += 4
 
         #Number of color planes 2 bytes long
         #Must be 1
-        self.bmpFile.write(self.offset,0x0001)
+        self.bmpFile.write(pack('<H',1))
         self.offset += 2
 
         #Number of bits per pixel 2 bytes long
         #We have 8 bits per color so 24 bits per pixel
-        self.bmpFile.write(self.offset,0x0018)
+        self.bmpFile.write(pack('<H',24))
         self.offset += 2
 
         return None
@@ -91,43 +84,51 @@ class BMP:
         #Important colors (0 means all colors are important) 4 bytes long
         self.bmpFile.write(self.offset,0x00000000)
         self.offset += 4
-
-    def __encodeBMPHeader(self):
-        #Begin writing the header.
-        #ID 2 bytes long
-        struct.pack_into('<B',self.bmpFile,self.offset,'B')
-        self.offset += 1
-        struct.pack_into('<B',self.bmpFile,self.offset,'M')
-        self.offset += 1
-
-        #Size of BMP file 4 bytes long (including header length which is always 14 bytes long)
-        #Size is 14 bytes for BMP Header + 12 for + height x width x number of color planes + Number of padding bytes x height
-        size = 14 + 12 
-        self.bmpFile.write(self.offset,0x00000000)
-        self.offset += 4
-
-        #Unused 2 bytes long
-        self.bmpFile.write(self.offset,0x0000)
-        self.offset += 2
-
-        #Unused 2 bytes long
-        self.bmpFile.write(self.offset,0x0000)
-        self.offset += 2
-
-        #Offset where the bitmap data begins 4 bytes long (end of header?)
-        self.bmpFile.write(self.offset,0x00000000)
-        self.offset += 4
-        
         return None
+    
+    def __encodePixelArray(self,width,height,MCUs):
+        MCUdim = MCUs[0][0].dim
+        MCUWidth = math.ceil(width / MCUdim)
+        MCUHeight = math.ceil(height / MCUdim)
+        #BMP files have rows that must be a multiple of 4 thus we my need some padding at the end of each row
+        paddingLen = width % 4
+        #note MCUs are dimxdim blocks and BMP stores pixels by full rows
+        #bottom up
+        for i in range(MCUHeight,0,-1):
+            #MCUs are 8x8 or 16x16
+            MCURow = math.floor(i / MCUdim)
+            #Row of pixels within current MCU block
+            pixelRow = i % MCUdim
+            for j in range(0,MCUWidth,1):
+                MCUCol = math.floor(i / MCUdim)
+                #Col of pixels within current MCU block
+                pixelCol = j % MCUdim
+                #print(f"MCUROW: {MCURow}\nMCUCOL: {MCUCol}\npixelRow: {pixelRow}\npixelCol: {pixelCol}\n")
+                self.bmpFile.write(pack('B',MCUs[MCURow][MCUCol].b[pixelRow][pixelCol]))
+                self.offset += 1
+                self.bmpFile.write(pack('B',MCUs[MCURow][MCUCol].g[pixelRow][pixelCol]))
+                self.offset += 1
+                self.bmpFile.write(pack('B',MCUs[MCURow][MCUCol].r[pixelRow][pixelCol]))
+                self.offset += 1
+            #add padding to end of each row if needed
+            for j in range(paddingLen):
+                self.bmpFile.write(pack('B',0))
+                self.offset += 1
 
-    def encodeBMP(self):
-        self.__encodeBMPHeader()
-        self.__encodeDIBHeader()
-        pass
+
+
+    def __init__(self,file,width,height,numColorChannels,MCUs):
+        regex = re.compile("[^.]*")
+        filename = regex.search(file).group()
         
-
-    def __init__(self, encode=True):
         #If we are encoding we want to create a BMP file
-        if(encode):
-            self.bmpFile = open("bmp.bmp", 'wb')
-            self.offset = 0
+        self.bmpFile = open(f"{filename}.bmp", 'wb')
+        if self.bmpFile == None:
+            print(f"Error! Cannot create bmp file with name {filename}")
+            exit(0)
+
+        self.offset = 0
+        self.__encodeHeader(width,height,numColorChannels)
+        self.__encodePixelArray(width,height,MCUs)
+        self.bmpFile.close()
+
