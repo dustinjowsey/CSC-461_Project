@@ -129,7 +129,7 @@ class JPEGDecoder():
             self.thumbnail = unpack(">H", data[14:16])[0]
             
         def __str__(self):
-            string = f"DEFAULT HEADER\nLength: {self.length}\nVersion: {self.version[0]}.{self.version[1]}\nDensity: {self.density}\nThumbnail: {self.thumbnail}\nEND\n"
+            string = f"DEFAULT HEADER\nLength: {self.length}\nVersion: {self.version[0]}.{self.version[1]}\nDensity: {self.density}\nThumbnail: {self.thumbnail}\nEND\n\n"
             return string
 
     class __huffmanTable():
@@ -241,14 +241,8 @@ class JPEGDecoder():
         #Extracts data from a huffman table block used in jpeg file formats
         #length - provide the length of the block (given by hex values at 2-4)
         #data - provide the data of the huffmanTable block beginning at the start of the marker
-        def __init__(self, length, data):
-            #note length does not include the length of the marker
-            self.length = length
-            if(length != len(data)):
-                print("Error! Invalid data length for 'Huffman Table'. Cannot process data accuratly.")
-                exit(0)
-
-            classIdByte = unpack("B", data[2:3])[0]
+        def __init__(self, data):
+            classIdByte = unpack("B", data[0:1])[0]
             #0 = DC For Luminance
             #1 = AC For chrominance
             self.classification = classIdByte >> 4
@@ -259,14 +253,17 @@ class JPEGDecoder():
             #id of table
             self.id = 0x0F & classIdByte
             #note id can only be from 0-3
-            if(self.id > 3):
+            if(self.id > 3 | self.id < 0):
                 print(f"Error! Invalid id for huffman table. recieved id value {self.id}")
                 exit(0)
 
             #always length of 16
-            self.symbolBitLengths = [unpack("B", data[3 + i:4 + i])[0] for i in range(16)]
-            
-            self.symbols = [unpack("B",data[19 + i:20 + i])[0] for i in range(length-19)]
+            self.symbolBitLengths = [unpack("B", data[1 + i:2 + i])[0] for i in range(16)]
+            length = 17
+            for i in self.symbolBitLengths:
+                length += i
+            self.length = length
+            self.symbols = [unpack("B",data[17 + i:18 + i])[0] for i in range(length-17)]
             self.codes = self.createBinaryValues()
             self.tree = self.createHuffTree(self.codes)
             return None
@@ -290,23 +287,18 @@ class JPEGDecoder():
 
     class __quantizationTable():
 
-        def __init__(self, length, data) -> None:
-            #note length does not include the marker
-            self.length = length
-            if(length != len(data)):
-                print("Error! Invalid data length for 'Quantization Table'. Cannot process data accuratly.")
-                exit(0)
-
+        def __init__(self, data) -> None:
             #id 0 is luminance
             #id 1 is chrominance
-            self.id = unpack("B", data[2:3])[0]
-            self.tablesize = self.length-3
+            self.id = unpack("B", data[0:1])[0]
+            self.tablesize = 64
+            self.length = 1 + self.tablesize 
             if self.id > 3:
                 print(f"Invalid Quantization table id: {self.id}")
                 exit(0)
 
             self.table = [None for i in range(64)]
-            entries = [unpack("B",data[3+i:4+i])[0] for i in range(length - 3)]
+            entries = [unpack("B",data[1+i:2+i])[0] for i in range(self.tablesize)]
             if self.tablesize == 16:
                 # ***Need to finish 16x16 map***
                 zigzagOrder16 = [0,1,16,32,17,2,3,18,33,48,64]
@@ -331,13 +323,13 @@ class JPEGDecoder():
                 string = string + " (Luminance)"
             elif self.id == 1:
                 string = string + " (Chrominance)"
-            string = string + f"\nTable size: {self.tablesize}x{self.tablesize}\nTable Data:\n"
+            string = string + f"\nTable size: {self.tablesize}\nTable Data:\n"
             for i in self.table:
                 string = string + " " + str(i)
                 count = count + 1
                 if count % 8 == 0:
                     string = string + "\n"
-            string = string + "END\n"
+            string = string + "END\n\n"
             return string
 
     class __startOfFrame():
@@ -409,7 +401,7 @@ class JPEGDecoder():
             string = f"START OF FRAME\nPrecision: {self.precision}\nLength: {self.length}\nImage Size: {self.width}x{self.height}\nNumber of Coponenets (Number of Color Channels): {self.numComponents}\nComponents (Color Channels):\n"
             for comp in self.components:
                 string = string + f"  id: {comp[0]}\n  horizontal sampling factor:vertical sampling factor: {comp[1]}:{comp[2]}\n  quantization table number (reference): {comp[3]}\n"
-            string = string + "END"
+            string = string + "END\n"
             return string
 
     class __startOfScan():
@@ -417,14 +409,20 @@ class JPEGDecoder():
             #note length of data will be greater than length of this header so cannot check length
             self.length = length
             self.numComponents = unpack("B", data[2:3])[0]
-            self.blocks = []
+            self.components = []
+
+            startsAtZero = False
+            if unpack("B", data[3:4])[0] == 0:
+                startsAtZero = True
             for i in range(3,length-5,1):
                 compId = unpack("B", data[i:i+1])[0]
+                if(startsAtZero):
+                    compId = compId + 1
                 DCAC = unpack("B", data[i+1:i+2])[0]
                 DCHuffId = DCAC >> 4
                 ACHuffId = 0x0F & DCAC
                 block = (compId, DCHuffId, ACHuffId)
-                self.blocks.append(block)
+                self.components.append(block)
             #must be zero in base
             self.startSelection = unpack("B", data[length-4:length-3])[0]
             self.endSelection = unpack("B", data[length-3:length-2])[0]
@@ -433,9 +431,9 @@ class JPEGDecoder():
         
         def __str__(self):
             string = f"START OF SCAN\nLength: {self.length}\nNumber of Components (Color Channels): {self.numComponents}\nBlock Data:\n"
-            for block in self.blocks:
-                string = string + f"  component id: {block[0]}\n  DC huffman table id: {block[1]}\n  AC huffman table id: {block[2]}\n"
-            string = string + f"Start of Selection: {self.startSelection}\nEnd of Selection: {self.endSelection}\nApproximation: {self.approx}\nEND\n"
+            for comp in self.components:
+                string = string + f"  component id: {comp[0]}\n  DC huffman table id: {comp[1]}\n  AC huffman table id: {comp[2]}\n"
+            string = string + f"Start of Selection: {self.startSelection}\nEnd of Selection: {self.endSelection}\nApproximation: {self.aprox}\nEND\n"
             return string
     
     class __RestartInterval():
@@ -479,7 +477,7 @@ class JPEGDecoder():
     imageBeingRead = False
     huffmanTables = []
     quantizationTables = []
-    blockDim = 0
+    componentWidth = 0
     zigzagMap = [[0,1,8,16,9,2,3,10,
                     17,24,32,25,18,11,4,5,
                     12,19,26,33,40,48,41,34,
@@ -522,10 +520,15 @@ class JPEGDecoder():
                 case 0xDB: #quantization tables 0xFF 0xDB
                     quantLength = unpack(">H", self.data[index+2:index+4])[0]
                     #length does not include marker
-                    quantTable = self.__quantizationTable(quantLength, self.data[index + 2: index + quantLength + 2])
-                    if(self.blockDim == 0):
-                        self.blockDim = int(math.pow(quantTable.tablesize,0.5))
+                    quantTable = self.__quantizationTable(self.data[index + 4: index + quantLength + 2])
+                    if(self.componentWidth == 0):
+                        self.componentWidth = int(math.pow(quantTable.tablesize,0.5))
                     self.quantizationTables.append(quantTable)
+                    length = quantTable.length
+                    while(length < (quantLength-2)):
+                        quantTable = self.__quantizationTable(self.data[index + length + 4: index + quantLength + 2])
+                        self.quantizationTables.append(quantTable)
+                        length += quantTable.length
 
                 case 0xDD: #Restart Interval 0xFF 0xDD
                     restLength = unpack(">H", self.data[index+2:index+4])[0]
@@ -543,8 +546,14 @@ class JPEGDecoder():
                 case 0xC4: #huffman tables 0xFF 0xC4
                     huffLength = unpack(">H", self.data[index+2:index+4])[0]
                     #length does not include the marker
-                    huffTable = self.__huffmanTable(huffLength, self.data[index + 2: index + huffLength + 2])
+                    huffTable = self.__huffmanTable(self.data[index + 4: index + huffLength + 2])
                     self.huffmanTables.append(huffTable)
+                    length = huffTable.length
+                    #If all huffman tables are under one marker we need to get all tables
+                    while (length < (huffLength-2)):
+                        huffTable = self.__huffmanTable(self.data[index + length + 4: index + huffLength + 2])
+                        length += huffTable.length
+                        self.huffmanTables.append(huffTable)
 
                 case 0xDA: #start of scan 0xFF 0xDA
                     length = unpack(">H", self.data[index+2:index+4])[0]
@@ -595,6 +604,7 @@ class JPEGDecoder():
     
     def __getACCoef(self,stream,length):
         #Length of ACCoef cannot be greater than 10
+        ACCoef = 0
         if(length > 10):
             print("Error! AC coefficient length greater than 10")
             exit(0)
@@ -612,16 +622,13 @@ class JPEGDecoder():
     def __createMCUsFromHuffman(self,data):
         #Need to handle restart intervals!!!! Might need to change the way data is processed
 
-        MCURows = math.ceil(self.startFrame.width / self.blockDim) 
-        MCUCols = math.ceil(self.startFrame.height / self.blockDim)
-        MCUs = [[self.__MCU(self.blockDim) for i in range(MCURows)] for j in range(MCUCols)]
+        MCURows = math.ceil(self.startFrame.width / self.componentWidth) 
+        MCUCols = math.ceil(self.startFrame.height / self.componentWidth)
+        MCUs = [[self.__MCU(self.componentWidth) for i in range(MCURows)] for j in range(MCUCols)]
         #Organize the DC and AC Huffman tables
         DCTables = [None for i in range(4)]
         ACTables = [None for i in range(4)]
         for table in self.huffmanTables:
-            if(table.id > 3 | table.id == 0):
-                print("Error! Invalid table id found in __decodingFromHuffman")
-                exit(0)
             #DC Table
             if table.classification == 0:
                 DCTables[table.id] = table
@@ -629,50 +636,77 @@ class JPEGDecoder():
             elif table.classification == 1:
                 ACTables[table.id] = table
             else:
-                print("Error! Invalid classification found in __decodingFromHuffman")
+                print("Error! Invalid huffman table classification found in __decodingFromHuffman")
                 exit(0)
 
         mapIndex = 0
-        if(self.blockDim == 16):
+        if(self.componentWidth == 16):
             mapIndex = 1
 
         prevDCCoef = [0 for i in range(3)]
         stream = self.__bitStream(data)
         for i in range(MCURows):
             for j in range(MCUCols):
-                for k in range(self.startScan.numComponents):
+                if(self.restInterval != None):
+                    if(self.restInterval != 0 & (i+1)*(j+1) % self.restInterval == 0):
+                        prevDCCoef = [0 for l in range(3)]
+                for k in range(1,self.startScan.numComponents,1):
+                    #Get current component
+                    component = None
+                    for p in range(self.startScan.numComponents):
+                        if k == self.startScan.components[p][0]:
+                            component = self.startScan.components[p]
+                            break
                     #start by getting DC coefficient length
-                    print("DC")
-                    print(stream.getBytes(-1,2))
-                    print(stream.getBit(stream.getPos()))
-                    DCCoeflength = self.__getDCCoefLen(DCTables[self.startScan.blocks[k][1]],stream)
+                    #print(f"DC, stream pos: {math.floor(stream.pos/8)}.{stream.pos%8}")
+                    #print(f"Bytes: {data[math.floor(stream.pos/8)]:10}")
+                    #print(DCTables[component[1]])
+                    #for p in range(11):
+                    #    print(stream.getBit(stream.getPos() + p))
+                    print(stream.getBytes())
+                    DCCoeflength = self.__getDCCoefLen(DCTables[component[1]],stream)
+                    print(stream.getBytes())
+                    #print(f"DC Length: {DCCoeflength}")
+                    #input("Step: ")
                     #using the length get the actual DC coefficient
+                    #print(f"DC, stream pos: {math.floor(stream.pos/8)}.{stream.pos%8}")
+                    #print(DCTables[component[1]])
+                    #for p in range(11):
+                    #    print(stream.getBit(stream.getPos() + p))
                     DCCoef = self.__getDCCoef(stream,DCCoeflength)
-
+                    print(stream.getBytes())
+                    #print(f"DCCoef: {DCCoef}")
+                    #input("Step: ")
                     #Keep track of old DCCoef since they will build onto eachother
                     MCUs[i][j][k][0][0] = DCCoef + prevDCCoef[k]
-                    prevDCCoef[k] = DCCoef
+                    prevDCCoef[k] = DCCoef + prevDCCoef[k]
 
                     #***
-                    #*** MADE IT HERE SIMPLIFY CODE AND FIGURE OUT WHAT IS WRONG ***
+                    #*** MADE IT HERE FIGURE OUT WHAT IS WRONG ***
                     #***
 
-                    #get AC values *** Note for simplicity we will only account for JPEGs with self.blockDim x self.blockDim tables
-                    for l in range(1,self.blockDim*self.blockDim,1):
-                        symbol = ACTables[self.startScan.blocks[k][1]].searchHuffTree(stream)
-                        print("AC")
-                        print(stream.getBytes(-1,2))
-                        print(stream.getBit(stream.getPos()))
+                    #get AC values *** Note for simplicity we will only account for JPEGs with self.componentWidth x self.componentWidth tables
+                    
+                    for l in range(1,self.componentWidth*self.componentWidth,1):
+                        #print(f"AC, stream pos: {math.floor(stream.pos/8)}.{stream.pos%8}")
+                        #print(f"{ACTables[component[2]]}")
+                        #for p in range(10):
+                        #    print(stream.getBit(stream.getPos() + p))
+                        symbol = ACTables[component[2]].searchHuffTree(stream)
+                        print(stream.getBytes())
+                        #print(f"AC symbol: {symbol}")
                         if(symbol == -1):
                             print("Error! Invalid symbol")
                             exit(0)
+
+                        #input("Step: ")
             
                         #if the symbol is 0 we just fill the rest of the MCU component with 0s
                         if(symbol == 0):
-                            while(l < MCURows):
+                            while(l < self.componentWidth):
                                 #Need to convert 1d array zigzag map into 2d array indexes
-                                x = math.floor(self.zigzagMap[mapIndex][l] / self.blockDim) 
-                                y = self.zigzagMap[mapIndex][l] % self.blockDim
+                                x = math.floor(self.zigzagMap[mapIndex][l] / self.componentWidth) 
+                                y = self.zigzagMap[mapIndex][l] % self.componentWidth
                                 MCUs[i][j][k][x][y] = 0
                                 l += 1
                             break
@@ -682,25 +716,32 @@ class JPEGDecoder():
                         ACCoeflength = symbol & 0x0F
 
                         #0xF0 symbol means we need to add 16 zeros not 15
-                        if(symbol == 0xF0):
+                        if(symbol > 15):
                             numZeros = 16
                         
-                        if(l + numZeros >= self.blockDim * self.blockDim):
+                        if(l + numZeros >= self.componentWidth * self.componentWidth):
                             print("Error! index out of bounds while adding zeros to MCU")
                             exit(0)
                         
                         for m in range(numZeros):
                             #Need to convert 1d array zigzag map into 2d array indexes
-                            x = math.floor(self.zigzagMap[mapIndex][l] / self.blockDim) 
-                            y = self.zigzagMap[mapIndex][l] % self.blockDim
+                            x = math.floor(self.zigzagMap[mapIndex][l] / self.componentWidth) 
+                            y = self.zigzagMap[mapIndex][l] % self.componentWidth
                             MCUs[i][j][k][x][y] = 0
                             l += 1
                         
                         #after adding number of zeros want to add the AC coefficient
+                        #print(f"AC, stream pos: {math.floor(stream.pos/8)}.{stream.pos%8}")
+                        #print(f"{ACTables[component[2]]}")
+                        #for p in range(10):
+                        #    print(stream.getBit(stream.getPos() + p))
                         ACCoef = self.__getACCoef(stream,ACCoeflength)
+                        print(stream.getBytes())
+                        #print(f"ACCoef: {ACCoef}")
+                        #input("Step: ")
                         #Need to convert 1d array zigzag map into 2d array indexes
-                        x = math.floor(self.zigzagMap[mapIndex][l] / self.blockDim) 
-                        y = self.zigzagMap[mapIndex][l] % self.blockDim
+                        x = math.floor(self.zigzagMap[mapIndex][l] / self.componentWidth) 
+                        y = self.zigzagMap[mapIndex][l] % self.componentWidth
                         MCUs[i][j][k][x][y] = ACCoef
                         l += 1
         return MCUs
@@ -709,7 +750,7 @@ class JPEGDecoder():
     def decodeImage(self):
         print("\n*** Starting Decoding *** Not complete yet\n")
         data = self.__removeStuffing()
-        MCUs = self.__createMCUsFromHuffman(data)
+        MCUs = self.__createMCUsFromHuffman(self.imageData)
         BMPEncoder.BMPEncoder(self.file,self.startFrame.width,self.startFrame.height,self.startFrame.numComponents,MCUs)
 
 
@@ -726,12 +767,12 @@ class JPEGDecoder():
         self.decodeImage()
 
     def __str__(self) -> str:
-        string = self.defHeader
+        string = str(self.defHeader)
         for table in self.quantizationTables:
-            string = string + table
-        string = string + self.startFrame
+            string = string + str(table)
+        string = string + str(self.startFrame)
         for table in self.huffmanTables:
-            string = string + table
-        string = string + self.startScan
+            string = string + str(table)
+        string = string + str(self.startScan)
         return string
 
