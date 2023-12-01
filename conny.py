@@ -1,6 +1,7 @@
 import sys
 import re
 import JPEGDecoder
+import PNGDecoder
 
 def display_options():
     print("conny [File] [option]\nOptions:\n-h list of all commands in conny.")
@@ -27,6 +28,8 @@ def main(argv):
                 case("jpeg" | "jpg" | "jfif", ["-d", "-i"]):
                     jpeg = JPEGDecoder.JPEGDecoder(filename)
                     print(jpeg)
+                case("png", ["-d"]):
+                    png = PNGDecoder.PNGDecoder(filename)
             
         case _:
             print("do nothing")
