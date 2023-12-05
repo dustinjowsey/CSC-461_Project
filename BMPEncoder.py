@@ -86,40 +86,22 @@ class BMPEncoder:
         self.offset += 4
         return None
     
-    def __encodePixelArray(self,width,height,MCUs):
-        MCUdim = MCUs[0][0].dim
-        MCUWidth = math.ceil(width / MCUdim)
-        MCUHeight = math.ceil(height / MCUdim)
-        #BMP files have rows that must be a multiple of 4 thus we my need some padding at the end of each row
-        paddingLen = width % 4
-        #note MCUs are dimxdim blocks and BMP stores pixels by full rows
-        #bottom up
-        for i in range(MCUHeight,0,-1):
-            #MCUs are 8x8 or 16x16
-            MCURow = math.floor(i / MCUdim)
-            #Row of pixels within current MCU block
-            pixelRow = i % MCUdim
-            for j in range(0,MCUWidth,1):
-                MCUCol = math.floor(i / MCUdim)
-                #Col of pixels within current MCU block
-                pixelCol = j % MCUdim
-                #print(f"MCUROW: {MCURow}\nMCUCOL: {MCUCol}\npixelRow: {pixelRow}\npixelCol: {pixelCol}\n")
-                self.bmpFile.write(pack('B',MCUs[MCURow][MCUCol].b[pixelRow][pixelCol]))
-                self.offset += 1
-                self.bmpFile.write(pack('B',MCUs[MCURow][MCUCol].g[pixelRow][pixelCol]))
-                self.offset += 1
-                self.bmpFile.write(pack('B',MCUs[MCURow][MCUCol].r[pixelRow][pixelCol]))
-                self.offset += 1
-            #add padding to end of each row if needed
-            for j in range(paddingLen):
-                self.bmpFile.write(pack('B',0))
-                self.offset += 1
+    def __writeData(self, data, width, height):
+        #We only support true color with no alpha with 8 bits per pixel so we need to add padding
+        maxX = 4*width
+        maxY = height
+
+        print(type(data))
+        #BMP is stored from bottom row up
+        for y in range(maxY, 0, -1):
+            for x in range(0, maxX, 4):
+                index = (y * maxX) + x
+                self.bmpFile.write(data[index:index+4])
 
 
-
-    def __init__(self,file,width,height,numColorChannels,MCUs):
+    def __init__(self,filename,width,height,numColorChannels,data):
         regex = re.compile("[^.]*")
-        filename = regex.search(file).group()
+        filename = regex.search(filename).group()
         
         #If we are encoding we want to create a BMP file
         self.bmpFile = open(f"{filename}.bmp", 'wb')
@@ -128,7 +110,7 @@ class BMPEncoder:
             exit(0)
 
         self.offset = 0
-        self.__encodeHeader(width,height,numColorChannels)
-        self.__encodePixelArray(width,height,MCUs)
+        self.__encodeHeader(width, height, numColorChannels)
+        self.__writeData(data, width, height)
         self.bmpFile.close()
 

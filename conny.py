@@ -2,6 +2,9 @@ import sys
 import re
 import JPEGDecoder
 import PNGDecoder
+import PNGEncoder
+import BMPDecoder
+import BMPEncoder
 
 def display_options():
     print("conny [File] [option]\nOptions:\n-h list of all commands in conny.")
@@ -30,7 +33,15 @@ def main(argv):
                     print(jpeg)
                 case("png", ["-d"]):
                     png = PNGDecoder.PNGDecoder(filename)
-            
+                case("png", ["-d", "-e", "bmp"]):
+                    png = PNGDecoder.PNGDecoder(filename)
+                    BMPEncoder.BMPEncoder(filename,png.width,png.height,png.numColorChannels,png.data)
+                case("bmp", ["-d"]):
+                    bmp = BMPDecoder.BMPDecoder(filename)
+                case("bmp", ["-d -e png"]):
+                    bmp = BMPDecoder.BMPDecoder(filename)
+                    PNGEncoder.PNGEncoder(filename,bmp.width,bmp.height,bmp.numColorChannels,bmp.data)
+
         case _:
             print("do nothing")
             

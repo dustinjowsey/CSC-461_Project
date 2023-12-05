@@ -1,4 +1,5 @@
 from struct import unpack
+from struct import pack
 import math
 import PNGConstants
 import zlib
@@ -51,8 +52,8 @@ class PNGDecoder():
         return decompressedData
 
     def __defilterImage(self, header, bytesPerPixel, data):
-        maxY = header.height
-        maxX = header.width * bytesPerPixel
+        maxY = header.getHeight()
+        maxX = header.getWidth() * bytesPerPixel
 
         defilteredImage = []
 
@@ -92,7 +93,7 @@ class PNGDecoder():
         try:
             f = open(filename, "rb")
         except FileExistsError as e:
-            print(f"Error! caught {type(e)}: e")
+            print(f"Error! caught {type(e)}: {e}")
         data = f.read()
 
         offset = 0
@@ -104,7 +105,7 @@ class PNGDecoder():
             exit(0)
         
         print("*Reading Chunk Data*")
-        chunks = self.__readChunks(data[8:])
+        chunks = self.__readChunks(data[offset:])
         #Header must be the first chunk in the file
         if(chunks[0] == None):
             raise PNGConstants.CorruptPNGError("Invalid png format, No chunks were read or found")
@@ -116,4 +117,17 @@ class PNGDecoder():
         print("*Decoding Image Data*")
         decodedData = self.__decodeImage(header, chunks)
         print("*Defilitering Image Data*")
-        defilteredImage = self.__defilterImage(header, 4, decodedData)
+        defilteredImage = self.__defilterImage(header, 3, decodedData)
+
+        self.width = header.getWidth()
+        self.height = header.getHeight()
+        self.numColorChannels = header.getNumColorChannels()
+        self.data = decodedData
+
+        print(type(self.data))
+        w = open("rawimage", "wb")
+        for byte in self.data:
+            w.write(pack("B",byte))
+        w.close()
+        print("*Finished Decoding PNG File*")
+

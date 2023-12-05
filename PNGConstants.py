@@ -1,6 +1,8 @@
 from struct import unpack
+from struct import pack
 from typing import Any
 import math
+import zlib
 
 #PNG signature
 PNGSIG = 0x89504E470D0A1A0A
@@ -68,6 +70,7 @@ class CorruptPNGError(Exception):
         super().__init__("Error! Corrupt PNG. " + message)
 
 #PNG Data Types
+#Will need to implement error checking using crc in the future
 class Chunk():
     def __eq__(self, __value: object) -> bool:
         if(self.type == __value):
@@ -85,8 +88,49 @@ class Chunk():
         self.crc = crc
 
 class Header(Chunk):
-    def __init__(self, data, crc):
-        super().__init__(13, IHDR, crc)
+    def getHeight(self):
+        return self.height
+
+    def getWidth(self):
+        return self.width
+
+    def getData(self):
+        return self.data
+
+    def getNumColorChannels(self):
+        if(self.colorType == 0 | self.colorType == 4):
+            return 1
+        return 3
+
+    def _encode(self, width, height, interlaceMethod=0):
+        if(width == -1 | height == -1):
+            print("Error! Attempting to encode without specifying width and height")
+            exit(0)
+        
+        self.data = []
+        #length
+        self.data.append(pack(PNGConstants.UINT, 13))
+        #self.data type
+        self.data.append(pack(PNGConstants.UINT, PNGConstants.IDHR))
+        #width
+        self.data.append(pack(PNGConstants.UINT, width))
+        #height
+        self.data.append(pack(PNGConstants.UINT, height))
+        #bit depth
+        #Only supporting bit depth of 8
+        self.data.append(pack(PNGConstants.UCHAR, 8))
+        #color type
+        #only supporting true color
+        self.data.append(pack(PNGConstants.UCHAR, 2))
+        #Compression method must be 0
+        self.data.append(pack(PNGConstants.UCHAR, 0))
+        #Filter method must be 0
+        self.data.append(pack(PNGConstants.UCHAR, 0))
+        #Interlace Method Only supporting no interlace
+        self.data.append(pack(PNGConstants.UCHAR, 0))
+        return
+    
+    def _decode(self, data):
         #Image width in pixels is 4 bytes long
         self.width = unpack(UINT, data[0:4])[0]
         #Image height in pixels is 4 bytes long
@@ -129,8 +173,33 @@ class Header(Chunk):
         self.interlaceMethod = unpack(UCHAR,data[12:13])[0]
         if(self.interlaceMethod != 0 & self.interlaceMethod != 1):
             raise CorruptPNGError(f"Invalid interlace method in header, recieved {self.interlaceMethod}")
+        return
 
+
+    def __init__(self, data=None,  crc=-1, width=-1, height=-1):
+        #assume encoding if data is none
+        if(data == None):
+            self.data = []
+            crc = zlib.crc32(self.data)
+            self.data.append(crc)
+            self._encode(width, height)
+            super().__init__(13, IDHR, crc)
+        else:
+            super().__init__(13, IHDR, crc)
+            self.width = 0
+            self.height = 0
+            self.bitDepth = 0
+            self.colorType = 0
+            self.compressionMethod = 0
+            self.filterMethod = 0
+            self.interlaceMethod = 0
+            self._decode(data)
         return None
+
+    def __str__(self):
+        string = "\nPNG HEADER START"
+        string = string
+        return string
 
 class Palette(Chunk):
     class Entry():
@@ -166,9 +235,20 @@ class Palette(Chunk):
             self.entries.append(self.Entry(r,g,b))
 
 class ImageData(Chunk):
-    def __init__(self, length, data, crc):
-        super().__init__(length, IDAT, crc)
-        self.data = data
+    def _encode(self, length):
+        #only supporting Deflate with 256 byte window
+        #compressedData = zlib.
+        encodedData = []
+        pass
+    
+    def __init__(self, length, data=None, crc=-1):
+        #assume encoding if data = none
+        if(data == None):
+            self.data = []
+            self._encode(length)
+        else:
+            super().__init__(length, IDAT, crc)
+            self.data = data
     
     def addChunk(self, chunk):
         if(chunk.type != IDAT):

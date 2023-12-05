@@ -746,12 +746,44 @@ class JPEGDecoder():
                         l += 1
         return MCUs
 
+    def __deformatMCUs(self, MCUs):
+        MCUdim = MCUs[0][0].dim
+        height = self.startFrame.height
+        width = self.startFrame.width
+        deformatedMCUData = []
+
+        MCUWidth = math.ceil(width / MCUdim)
+        MCUHeight = math.ceil(height / MCUdim)
+
+        paddingLen = width % 4
+        #note MCUs are dimxdim blocks and BMP stores pixels by full rows
+        #bottom up
+        for i in range(MCUHeight,0,-1):
+            #MCUs are 8x8 or 16x16
+            MCURow = math.floor(i / MCUdim)
+            #Row of pixels within current MCU block
+            pixelRow = i % MCUdim
+            for j in range(0,MCUWidth,1):
+                MCUCol = math.floor(i / MCUdim)
+                #Col of pixels within current MCU block
+                pixelCol = j % MCUdim
+                #print(f"MCUROW: {MCURow}\nMCUCOL: {MCUCol}\npixelRow: {pixelRow}\npixelCol: {pixelCol}\n")
+                deformatedMCUData.append(pack('B',MCUs[MCURow][MCUCol].b[pixelRow][pixelCol]))
+                deformatedMCUData.append(pack('B',MCUs[MCURow][MCUCol].g[pixelRow][pixelCol]))
+                deformatedMCUData.append(pack('B',MCUs[MCURow][MCUCol].r[pixelRow][pixelCol]))
+            #add padding to end of each row if needed
+            for j in range(paddingLen):
+                deformatedMCUData.append(pack('B',0))
+        
+        return deformatedMCUData
+
 
     def decodeImage(self):
         print("\n*** Starting Decoding *** Not complete yet\n")
         data = self.__removeStuffing()
         MCUs = self.__createMCUsFromHuffman(self.imageData)
-        BMPEncoder.BMPEncoder(self.file,self.startFrame.width,self.startFrame.height,self.startFrame.numComponents,MCUs)
+        deformatedData = self.__deformatMCUs(MCUs)
+        BMPEncoder.BMPEncoder(self.file,self.startFrame.width,self.startFrame.height,self.startFrame.numComponents,deformatedData)
 
 
     def __init__(self, file):

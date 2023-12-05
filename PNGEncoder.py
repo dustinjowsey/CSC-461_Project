@@ -1,9 +1,11 @@
 import math
 import PNGConstants
+import zlib
 
 class PNGEncoder():
     #Need to try every filter option per line of the image 
-    def __filterData(self, data, pixelWidth, pixelHeight, bytesPerPixel = 4):
+    #ONLY SUPPORTS RGBA RIGHT NOW
+    def _filterData(self, data, pixelWidth, pixelHeight, bytesPerPixel = 4):
         maxX = pixelWidth * bytesPerPixel
         maxY = pixelHeight
 
@@ -63,14 +65,27 @@ class PNGEncoder():
                         filteredData.append(PNGConstants.filterPaeth(x,y,(rowIndex + x),maxX,data))
         return filteredData
 
-    def __encodeImage(self):
+    def _encodeImage(self, data):
+        #* would like to do this myself without zlib
+        encodedData = zlib.compress(data)
+        return encodedData
+
+    def _buildChunks(self, width, height):
+        #Need to begin by building the header chunk
+        chunkedData = []
+        chunkedData.append(PNGConstants.Header(None, -1, width, height))
+        #Skipping palette since we only support truecolor
+        #chunkedData.append(PNGConstants.Palette())
+        chunkedData.append(PNGConstants.ImageData())
+        pass
+
+    def __init__(self, filename, width, height, numColorChannels, rawData):
+        #If we are encoding we want to create a PNG file
+        self.pngFile = open(f"{filename}.png", 'wb')
+        if self.bmpFile == None:
+            print(f"Error! Cannot create png file with name {filename}")
+            exit(0)
         
-        pass
-
-    def __buildChunks(self):
-        pass
-
-    def __init__(self, rawData, headerInfo):
-        filteredData = self.__filterData(rawData, headerInfo.width, headerInfo.height)
-        encodedData = self.__encodeImage(filteredData)
-        self.__buildChunks(encodedData)
+        filteredData = self._filterData(rawData, width, height)
+        encodedData = self._encodeImage(filteredData)
+        self._buildChunks(encodedData)
