@@ -33,14 +33,10 @@ https://github.com/dustinjowsey/CSC-461_Project
 <h2>**Conny Documentation:**</h2>    
 To run please type <br />
 python conny.py [filename] [options] <br />
-Note: <br />
-&nbsp;&nbsp;Right now please use python conny.py profile.jpg -d -i <br />
+Ex: python conny.py [filename].png -d -e bmp<br />
 This will display the steps of the decoding process up to the point I have made it to i.e not as far as I would like to have made it. <br />
 <br />
 <h2>**Project update**</h2>    
-Dustin Jowsey     
-V00964979    
-CSC-461    
 									Project Update    
     
 • For the schedule I have created, I am quite far behind. I do not think it is possible to complete all that I had planned originally in the time period of the project.       
@@ -51,5 +47,6 @@ CSC-461
 https://yasoob.me/posts/understanding-and-writing-jpeg-decoder-in-python/ <br />
 This reference has helped me to understand the JPEG Header a lot as well as give me a way to compare my output to what is expected from a working JPEG decoder.
 
+<h2>**Project Report**</h2>
 
 
