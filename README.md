@@ -1,9 +1,6 @@
 # CSC-461 Project
 
 <h2>**Project Proposal**</h2>
-Dustin Jowsey     
-V00964979    
-
 **File Converter**
 Image and Video File Type Conversion
 
@@ -36,14 +33,10 @@ https://github.com/dustinjowsey/CSC-461_Project
 <h2>**Conny Documentation:**</h2>    
 To run please type <br />
 python conny.py [filename] [options] <br />
-Note: <br />
-&nbsp;&nbsp;Right now please use python conny.py profile.jpg -d -i <br />
+Ex: python conny.py [filename].png -d -e bmp<br />
 This will display the steps of the decoding process up to the point I have made it to i.e not as far as I would like to have made it. <br />
 <br />
 <h2>**Project update**</h2>    
-Dustin Jowsey     
-V00964979    
-CSC-461    
 									Project Update    
     
 • For the schedule I have created, I am quite far behind. I do not think it is possible to complete all that I had planned originally in the time period of the project.       
@@ -51,8 +44,18 @@ CSC-461
 • I think I will need to adjust my proposal as I wanted to be working on audio file conversions by now, but am still working on the JPEG decoder. I think I will be able to complete the JPEG and PNG converter soon as once I finish the decoder I will have a really good idea of the process that goes into JPEG images. I would like to push myself to at least complete an audio file conversion by the end of the course. I would like to attempt MP3 to WAV and vice versa.        
 • I would like to update the output of data to provide a better way of displaying data the decoding process if they choose to see the output.       
 <h2>**References**</h2>
+-This reference has helped me to understand the JPEG Header a lot as well as give me a way to compare my output to what is expected from a working JPEG decoder. <br />
 https://yasoob.me/posts/understanding-and-writing-jpeg-decoder-in-python/ <br />
-This reference has helped me to understand the JPEG Header a lot as well as give me a way to compare my output to what is expected from a working JPEG decoder.
-
+-Video series to fully understand JPEG decoding <br />
+https://www.youtube.com/watch?v=CPT4FSkFUgs&list=PLpsTn9TA_Q8VMDyOPrDKmSJYt1DLgDZU4 <br />
+-Used to understand how PNG data is stored <br />
+https://en.wikipedia.org/wiki/PNG <br />
+-Amazing resource for understanding all the encoding and decoding steps for PNG, including all the available options for PNG <br />
+https://www.w3.org/TR/PNG-Introduction.html <br />
+-Great video to help understand the steps to a PNG encoder and decoder <br />
+https://www.youtube.com/watch?v=EFUYNoFRHQI <br />
+-Used to understand how BMP files store data <br />
+https://en.wikipedia.org/wiki/BMP_file_format <br />
+<h2>**Project Report**</h2>
 
 
