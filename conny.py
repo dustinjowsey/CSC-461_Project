@@ -6,7 +6,10 @@ from decoders import BMPDecoder
 from decoders import PNGDecoder
 
 def display_options():
-    print("conny [File] [option]\nOptions:\n-h list of all commands in conny.")
+    print("conny [File] [option]\nOptions:\n -h list of all commands in conny.")
+    print(" -d decode \"File\"")
+    print(" -e [Filetype] Encodes \"File\" to \"Filetype\"")
+    print("  Filetypes:\n   bmp\n   png")
 
 def main(argv):
     #Process options
@@ -16,6 +19,7 @@ def main(argv):
     match(argv):
         case [_,"-h"]:
             display_options()
+            return None
         case [_, filename, *_]:
             regex = re.compile("[.][a-z]*[A-Z]*")
             extension = regex.search(filename)
@@ -37,7 +41,7 @@ def main(argv):
                     BMPEncoder.BMPEncoder(filename,png.width,png.height,png.numColorChannels,png.data)
                 case("bmp", ["-d"]):
                     bmp = BMPDecoder.BMPDecoder(filename)
-                case("bmp", ["-d -e png"]):
+                case("bmp", ["-d", "-e", "png"]):
                     bmp = BMPDecoder.BMPDecoder(filename)
                     PNGEncoder.PNGEncoder(filename,bmp.width,bmp.height,bmp.numColorChannels,bmp.data)
 
