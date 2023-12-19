@@ -1,9 +1,6 @@
 # CSC-461 Project
 
 <h2>**Project Proposal**</h2>
-Dustin Jowsey     
-V00964979    
-
 **File Converter**
 Image and Video File Type Conversion
 
