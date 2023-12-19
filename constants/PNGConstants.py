@@ -368,7 +368,7 @@ def filterSub(currentCol, currentIndex, data):
 def filterUp(currentCol, currentRow, currentIndex, data):
     val = 0
     if(currentRow > 0):
-        val = data[currentIndex - width]
+        val = data[currentIndex - (currentCol * currentRow)]
     return val
 
 def filterAverage(currentCol, currentRow, currentIndex, maxCols, data):
