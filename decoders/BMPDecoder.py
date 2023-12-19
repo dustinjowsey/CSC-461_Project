@@ -1,4 +1,4 @@
-import BMPConstants
+from constants import BMPConstants
 
 class BMPDecoder():
     #**WILL NEED WORK TO ALLOW FOR PIXELS WITH <8 BITS PER PIXEL IE NEED BITSTREAM

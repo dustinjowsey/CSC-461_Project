@@ -1,7 +1,7 @@
 from struct import pack
 import re
 import math
-import BMPConstants
+from constants import BMPConstants
 
 class BMPEncoder:
 
@@ -86,18 +86,22 @@ class BMPEncoder:
         self.offset += 4
         return None
     
-    def __writeData(self, data, width, height):
+    def __writeData(self, data, width, height, numColorChannels):
         #We only support true color with no alpha with 8 bits per pixel so we need to add padding
-        maxX = 4*width
+        maxX = numColorChannels*width
         maxY = height
 
-        print(type(data))
         #BMP is stored from bottom row up
         for y in range(maxY, 0, -1):
-            for x in range(0, maxX, 4):
+            count = 0
+            for x in range(0, maxX, numColorChannels):
                 index = (y * maxX) + x
-                self.bmpFile.write(data[index:index+4])
-
+                self.bmpFile.write(data[index:index+numColorChannels])
+                count += 1
+            #add padding to row
+            if(count % 4 != 0):
+                for i in range(count % 4):
+                    self.bmpFile.write(0x00)
 
     def __init__(self,filename,width,height,numColorChannels,data):
         regex = re.compile("[^.]*")
@@ -111,6 +115,6 @@ class BMPEncoder:
 
         self.offset = 0
         self.__encodeHeader(width, height, numColorChannels)
-        self.__writeData(data, width, height)
+        self.__writeData(data, width, height, numColorChannels)
         self.bmpFile.close()
 

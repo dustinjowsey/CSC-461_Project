@@ -1,5 +1,5 @@
 import math
-import PNGConstants
+from constants import PNGConstants
 import zlib
 
 class PNGEncoder():

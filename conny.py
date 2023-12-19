@@ -1,10 +1,9 @@
 import sys
 import re
-import JPEGDecoder
-import PNGDecoder
-import PNGEncoder
-import BMPDecoder
-import BMPEncoder
+from encoders import BMPEncoder
+from encoders import PNGEncoder
+from decoders import BMPDecoder
+from decoders import PNGDecoder
 
 def display_options():
     print("conny [File] [option]\nOptions:\n-h list of all commands in conny.")

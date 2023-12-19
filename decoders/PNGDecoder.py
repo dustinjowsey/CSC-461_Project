@@ -1,7 +1,7 @@
 from struct import unpack
 from struct import pack
 import math
-import PNGConstants
+from constants import PNGConstants
 import zlib
 
 #Note PNG is big Endian
@@ -49,7 +49,60 @@ class PNGDecoder():
         
         #** Want to code this without using zlib library **
         decompressedData = zlib.decompress(data.data)
-        return decompressedData
+        return list(decompressedData)
+
+    #def __defilterImage(self, header, numColorChannels, data):
+    #    maxY = header.getHeight()
+    #    maxX = header.getWidth() * numColorChannels
+    #    if(maxX % 4 != 0):
+    #        maxX += (maxX % 4)
+    #    width = header.getWidth()
+    #    height = header.getHeight()
+#
+    #    colorComponents = [[] for i in range(numColorChannels)]
+#
+    #    defilteredImage = []
+ #
+    #    #print(3*height*width + (3*height))
+    #    filters = []
+    #    for i in range(height):
+    #        filters.append(data[i*width])
+#
+    #    print(height*width*3 + (height))
+    #    print(len(data))
+    #    i = 0
+    #    for k in range(numColorChannels):
+    #        for y in range(height):
+    #            if(k == 0):
+    #                i += 1
+    #            #filter option for row
+    #            for x in range(width):
+    #                match(filters[y]):
+    #                    #filter type None
+    #                    case 0:
+    #                        val = data[i]
+    #                    #filter type Sub
+    #                    case 1:
+    #                        val = PNGConstants.filterSub(x,i,data)
+    #                    #filter type Up
+    #                    case 2:
+    #                        val = PNGConstants.filterUp(x,y,width,data)
+    #                    #filter type Average
+    #                    case 3:
+    #                        val = PNGConstants.filterAverage(x,y,i,width,data)
+    #                    #filter type Paeth
+    #                    case 4:
+    #                        val = PNGConstants.filterPaeth(x,y,i,k,width,data)
+    #                colorComponents[k].append((data[i] + val) % 256)
+    #                #print(i)
+    #                i += 1
+#
+    #    for i in range(width*height):
+    #        defilteredImage.append(colorComponents[0][i])
+    #        defilteredImage.append(colorComponents[1][i])
+    #        defilteredImage.append(colorComponents[2][i])
+    #    print(defilteredImage)
+    #    return defilteredImage
 
     def __defilterImage(self, header, bytesPerPixel, data):
         maxY = header.getHeight()
@@ -83,7 +136,7 @@ class PNGDecoder():
                 i += 1
 
         return defilteredImage
-    
+
     def __verifyChunkOrder(self, chunks):
         if(chunks[0] != PNGConstants.IDHR | chunks[1] != PNGConstants.PLTE | chunks[2] != PNGConstants.IDAT | chunks[3] != PNGConstants.IEND):
             raise PNGConstants.CorruptPNGError("Invalid chunk order cannot properly decode image.")
@@ -122,7 +175,7 @@ class PNGDecoder():
         self.width = header.getWidth()
         self.height = header.getHeight()
         self.numColorChannels = header.getNumColorChannels()
-        self.data = decodedData
+        self.data = bytes(defilteredImage)
 
         print(type(self.data))
         w = open("rawimage", "wb")

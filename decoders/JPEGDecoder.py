@@ -1,7 +1,7 @@
 from struct import unpack
 import math
 from typing import Any
-import BMPEncoder
+import encoders/BMPEncoder
 
 class JPEGDecoder():
 

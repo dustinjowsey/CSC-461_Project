@@ -365,20 +365,20 @@ def filterSub(currentCol, currentIndex, data):
         val = data[currentIndex - 1]
     return val
 
-def filterUp(currentCol, currentRow, maxCols, data):
+def filterUp(currentCol, currentRow, currentIndex, data):
     val = 0
     if(currentRow > 0):
-        val = data[(((currentRow-1)*maxCols) + currentCol)]
+        val = data[currentIndex - width]
     return val
 
 def filterAverage(currentCol, currentRow, currentIndex, maxCols, data):
     prev = filterSub(currentCol, currentIndex, data)
-    up = filterUp(currentCol, currentRow, maxCols, data)
+    up = filterUp(currentCol, currentRow, currentIndex, data)
     return math.floor((prev + up)/2)
 
 def filterPaeth(currentCol, currentRow, currentIndex, maxCols, data):
     prev = filterSub(currentCol, currentIndex, data)
-    up = filterUp(currentCol, currentRow, maxCols, data)
+    up = filterUp(currentCol, currentRow, currentIndex, data)
     prevUp = 0
     if(currentCol > 0 & currentRow > 0):
         prevUp = data[(((currentRow-1)*maxCols) + currentCol - 1)]
