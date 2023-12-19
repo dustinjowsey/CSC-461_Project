@@ -44,7 +44,7 @@ This will display the steps of the decoding process up to the point I have made 
 • I think I will need to adjust my proposal as I wanted to be working on audio file conversions by now, but am still working on the JPEG decoder. I think I will be able to complete the JPEG and PNG converter soon as once I finish the decoder I will have a really good idea of the process that goes into JPEG images. I would like to push myself to at least complete an audio file conversion by the end of the course. I would like to attempt MP3 to WAV and vice versa.        
 • I would like to update the output of data to provide a better way of displaying data the decoding process if they choose to see the output.       
 <h2>**References**</h2>
--This reference has helped me to understand the JPEG Header a lot as well as give me a way to compare my output to what is expected from a working JPEG decoder.
+-This reference has helped me to understand the JPEG Header a lot as well as give me a way to compare my output to what is expected from a working JPEG decoder. <br />
 https://yasoob.me/posts/understanding-and-writing-jpeg-decoder-in-python/ <br />
 -Video series to fully understand JPEG decoding <br />
 https://www.youtube.com/watch?v=CPT4FSkFUgs&list=PLpsTn9TA_Q8VMDyOPrDKmSJYt1DLgDZU4 <br />
