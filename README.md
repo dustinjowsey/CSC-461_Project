@@ -37,9 +37,9 @@ Ex: python conny.py [filename].png -d -e bmp<br />
 This will display the steps of the decoding process up to the point I have made it to i.e not as far as I would like to have made it. <br />
 Ex2: python conny.py examples/test.png -d -e bmp <br />
 test.png (input file) <br />
-![alt text]https://github.com/dustinjowsey/CSC-461_Project/blob/main/examples/test.png
+![alt text](https://github.com/dustinjowsey/CSC-461_Project/blob/main/examples/test.png)
 test.bmp (output file) <br />
-![alt text]https://github.com/dustinjowsey/CSC-461_Project/blob/main/examples/test.bmp
+![alt text](https://github.com/dustinjowsey/CSC-461_Project/blob/main/examples/test.bmp)
 As you can see there are still some bugs in the code. I think I have narrowed it down to my filtering method in the PNG decoder. I plan to fix this in the future.
 <br />
 <h2>**Project update**</h2>    
